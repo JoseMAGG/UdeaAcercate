@@ -32,7 +32,6 @@ const Home = () => {
         }
       }, [eventsData]);
 
-    console.log("[Home] tag:", tag)
     if (loadingUser || status === "loading") return (<Loading />)
     if (loadingAll) return (<Loading />)
     if (session && errorAll) {
@@ -51,7 +50,7 @@ const Home = () => {
         
       };
     return (
-        <PrivateLayout>
+        <PrivateLayout isAdminPage={false}>
             <title>
                 Home | UdeAcercate
             </title>
@@ -64,7 +63,7 @@ const Home = () => {
                             <span className='text-base sm:text-xl '>Crear Evento</span>
                             <MdAddCircleOutline className="h-4 w-4 sm:h-8 sm:w-8" />
                         </button>
-                        <CreateEventModal open={openCreateEvent} setOpen={setOpenCreateEvent}>
+                        <CreateEventModal titulo='Crear Evento' open={openCreateEvent} setOpen={setOpenCreateEvent}>
                             <FormEvent setModalOpen={setOpenCreateEvent}/>
                         </CreateEventModal>
                         <select className='rounded-2xl text-base sm:text-xl shadow-lg' onChange={(e) => setTag(e.target.value)}>

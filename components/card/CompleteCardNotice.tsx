@@ -4,15 +4,16 @@ import { Avatar } from '../ui/Avatar'
 import { MdOutlinePermIdentity, MdOutlinePlace, MdOutlineSubdirectoryArrowLeft } from 'react-icons/md'
 import { useMutation, useQuery } from '@apollo/client'
 import { ExtendedEvent, GET_EVENT_BY_ID } from '@/graphql/client/event'
-import { Attendee, Comment } from "@/prisma/generated/type-graphql"
+import { Attendee, Comment, Information } from "@/prisma/generated/type-graphql"
 import { CommentContainer } from './CommentContainer'
 import { ADD_ATTENDEE, FIND_ATTENDEE, QUIT_ATTENDEE } from '@/graphql/client/attendee'
 import { CREATE_COMMENT } from '@/graphql/client/comment'
 import DeleteOrReportEventButton from '../buttons/DeleteOrReportEventButton';
 import { CLASIFFY_COMMENT_SENTIMENT } from '@/graphql/client/commentSentiment'
 import { toast } from 'react-toastify'
+import { GET_NOTICE_BY_ID } from '@/graphql/client/information'
 
-interface completeCardProps {
+interface CompleteCardNoticeProps {
     id: string,
     asistentes?: number,
     idAutor?: string,
@@ -28,28 +29,13 @@ interface completeCardProps {
 }
 
 // const CompleteCard = ({ id, nombre, asistentes, imagenAutor, idAutor, imagenEvento, sessionUserId }: completeCardProps) => {
-const CompleteCard = ({ id, nombre, asistentes, imagenAutor, idAutor, imagenEvento, sessionUserId, day, hours, minutes, month, year }: completeCardProps) => {
+const CompleteCardNotice = ({ id, nombre, imagenAutor, idAutor, imagenEvento, sessionUserId, day, hours, minutes, month, year }: CompleteCardNoticeProps) => {
     const [comentario, setComentario] = useState('');
-    const { data, loading, error } = useQuery<{ event: ExtendedEvent }>(GET_EVENT_BY_ID, {
-        variables: { eventId: id },
+    const { data, loading, error } = useQuery<{ noticeById: Information }>(GET_NOTICE_BY_ID, {
+        variables: { infoId: id },
         fetchPolicy: 'cache-first'
     })
-    const { data: attendeeData, loading: loadingAttendee, error: errorAttendee } =
-        useQuery<{ attendee: Attendee }>(FIND_ATTENDEE, {
-            variables: { userId: sessionUserId, eventId: id },
-            fetchPolicy: 'cache-first'
-
-        })
-    const [addAttendee] = useMutation<{ attendee: Attendee }>(ADD_ATTENDEE,
-        {
-            variables: { userId: sessionUserId, eventId: id },
-        });
-
-    const [quitAttendee] = useMutation<{ attendee: Attendee }>(QUIT_ATTENDEE,
-        {
-            variables: { userId: sessionUserId, eventId: id },
-        });
-
+    console.log("card completa",data)
     const [createComment] = useMutation(CREATE_COMMENT,
         { variables: { userId: sessionUserId, eventId: id, text: comentario } });
 
@@ -61,34 +47,10 @@ const CompleteCard = ({ id, nombre, asistentes, imagenAutor, idAutor, imagenEven
         return <p>error</p>
     }
 
-    const executeAddAttendee = async () => {
-        try {
-            const resultado = await addAttendee({
-                refetchQueries: [GET_EVENT_BY_ID, FIND_ATTENDEE]
-            });
-            console.log("AddAttendee: ", resultado);
-
-        } catch (error) {
-            console.error('Error al ejecutar la mutación:', error);
-        }
-    }
-
-    const executeQuitAttendee = async () => {
-        try {
-            await quitAttendee(
-                { refetchQueries: [GET_EVENT_BY_ID, FIND_ATTENDEE] }
-            )
-        }
-        catch (error) {
-            console.error('Error al ejecutar la mutación:', error);
-        }
-
-    }
-
     const executeCreateComment = async () => {
         try {
             const resultado = await createComment(
-                { refetchQueries: [GET_EVENT_BY_ID] }
+                { refetchQueries: [GET_NOTICE_BY_ID] }
             );
             console.log('Data resultante de la mutación:', resultado.data);
             const commentId = resultado.data.createComment.id
@@ -111,55 +73,13 @@ const CompleteCard = ({ id, nombre, asistentes, imagenAutor, idAutor, imagenEven
             <div className='flex flex-col h-full md:w-[60%] pr-2'>
                 {/* <div className='w-[100%] h-[50%] rounded-lg debug'> */}
                 <div className='w-[100%] rounded-lg'>
-                    {
-                        image.includes('.mp4') ? 
-                        <video
-                            // className="rounded-lg min-w-[280px] sm:min-w-[480px]"
-                            // width={360}
-                            className="rounded-lg"
-                            controls
-                            muted
-                        >
-                            <source
-                            type="video/mp4"
-                            src={image}
-                            />
-                        </video> :
-                        <Image className='rounded-lg'
-                            width={1000}
-                            height={0}
-                            src={image}
-                            alt={'Imagen de evento'} 
-                        />
-
-                    }
-                </div>
-                <div className='flex justify-between p-2'>
-                    <div className='flex gap-2 items-center'>
-                        <MdOutlinePlace className="h-8 w-8" />
-                        <span className='font-bold'>LUGAR:</span>
-                        <span className='font-bold'>{data?.event.place}</span>
-                    </div>
-                    <div className='flex'>
-                        <button className=' ButtonCard'
-                            onClick={attendeeData?.attendee ? executeQuitAttendee : executeAddAttendee}>{attendeeData?.attendee ? "No Asistir" : "Asistir"}
-                        </button>
-                        <div className='flex items-center'>
-                            <MdOutlinePermIdentity className={'h-8 w-8'} />
-                            <span className='font-bold'>{data?.event.attendeesCount}</span>
-                        </div>
-                    </div>
-
+                    <Image className='rounded-lg'
+                        width={1000}
+                        height={0}
+                        src={image}
+                        alt={'Imagen de evento'} />
                 </div>
                 {/* delete button */}
-                <div className='p-2 flex justify-start'>
-                    <DeleteOrReportEventButton
-                        idAutor={idAutor}
-                        sessionUserId={sessionUserId}
-                        eventId={id}
-                        // imagenEvento={imagenEvento}
-                        />
-                </div>
             </div>
             {/* lado derecho */}
             {/* <div className='flex flex-col h-full md:w-[40%] pl-2 gap-2 debug'> */}
@@ -178,12 +98,12 @@ const CompleteCard = ({ id, nombre, asistentes, imagenAutor, idAutor, imagenEven
                     </span>
                 </div>
                 <div>
-                    {data?.event.info.description}
+                    {data?.noticeById.description}
                 </div>
 
                 <div className='pl-4'>
                     <CommentContainer
-                        data={data?.event.info.comments}
+                        data={data?.noticeById.comments}
                         sessionUserId={sessionUserId} />
                 </div>
                 <div className='flex'>
@@ -210,4 +130,4 @@ const CompleteCard = ({ id, nombre, asistentes, imagenAutor, idAutor, imagenEven
     )
 }
 
-export default CompleteCard
+export default CompleteCardNotice

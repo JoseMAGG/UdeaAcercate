@@ -20,6 +20,10 @@ const TYPES = {
         label: "Academico",
         color: "var(--blue-dark)",
     },
+    Noticia: {
+        label: "Noticia",
+        color: "var(--violet-oficial)",
+    },
 };
 
 const TagType = ({type} : TypesProps) => {

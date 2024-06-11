@@ -1,9 +1,27 @@
 import { Resolver } from "@/types";
 import { findHashtags } from "../utils/infoUtil";
 import { isAdminUser } from "../utils/roleUtil";
+import InfoProfile from '../../../components/profile/InfoProfile';
+import { findUser } from "../utils/userUtil";
 
 const informationResolvers: Resolver = {
-    Query: {},
+
+    Query: {
+        notices: async (parent, args, context) => {
+            return await context.db.information.findMany({
+                where: {
+                    event: null
+                }
+            })
+        },
+        noticeById: async (parent, args, context) => {
+            return await context.db.information.findUnique({
+                where: {
+                    id: args.infoId
+                }
+            })
+        }
+    },
     Mutation: {
         createInfo: async (parent, args, context) => {
             const { db } = context;
@@ -15,7 +33,7 @@ const informationResolvers: Resolver = {
             }
             const { title, description, image, } = args;
             const hashtags: string[] = findHashtags(description);
-            
+
             const newInfo = await db.information.create({
                 data: {
                     title: title,
@@ -65,6 +83,9 @@ const informationResolvers: Resolver = {
         year: async (parent) => {
             const date = new Date(parent.date)
             return date.getUTCFullYear()
+        },
+        author: async (parent, args, context) => {
+            return findUser(context.db, parent.authorId);
         },
     },
 }
